@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'screens/home_screen.dart';
 import 'screens/alert_settings_screen.dart';
+import 'screens/radar_map_screen.dart';
+import 'screens/community_report_screen.dart';
+import 'services/report_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +19,11 @@ class WeatherlyApp extends StatelessWidget {
       title: 'Weatherly',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: HomeScreen(),
-      routes: {'/alerts': (context) => AlertSettingsScreen()},
+      routes: {
+        '/alerts': (context) => AlertSettingsScreen(),
+        '/radar': (context) => RadarMapScreen(),
+        '/reports': (context) => CommunityReportScreen(), // Will create next
+      },
     );
   }
 }
