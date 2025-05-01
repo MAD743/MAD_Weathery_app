@@ -31,11 +31,9 @@ class WeatherService {
     }
 
     final url =
-        'https://api.openweathermap.org/data/2.5/forecast?lat=$lat&lon=$lon&units=metric&appid=$apiKey';
+        'https://api.openweathermap.org/data/2.5/forecast?lat=$lat&lon=$lon&units=imperial&appid=$apiKey';
 
     final response = await http.get(Uri.parse(url));
-    print('STATUS CODE: ${response.statusCode}');
-    print('BODY: ${response.body}');
     if (response.statusCode != 200) throw Exception('Failed to fetch weather');
 
     final data = json.decode(response.body);
@@ -55,20 +53,19 @@ class WeatherService {
   }
 
   List<DailyForecast> _extractDailyForecasts(List<dynamic> forecastList) {
-    Map<String, List<Map<String, dynamic>>> grouped = {};
+    Map<String, List<double>> groupedTemps = {};
 
     for (var entry in forecastList) {
       String date = entry['dt_txt'].substring(0, 10);
-      if (!grouped.containsKey(date)) {
-        grouped[date] = [];
+      double temp = entry['main']['temp'].toDouble();
+      if (!groupedTemps.containsKey(date)) {
+        groupedTemps[date] = [];
       }
-      grouped[date]!.add(entry);
+      groupedTemps[date]!.add(temp);
     }
 
     List<DailyForecast> daily = [];
-    for (var date in grouped.keys.take(7)) {
-      final temps =
-          grouped[date]!.map((e) => e['main']['temp'].toDouble()).toList();
+    groupedTemps.forEach((date, temps) {
       daily.add(
         DailyForecast(
           date: DateTime.parse(date),
@@ -76,8 +73,8 @@ class WeatherService {
           tempMax: temps.reduce((a, b) => a > b ? a : b),
         ),
       );
-    }
+    });
 
-    return daily;
+    return daily.take(7).toList();
   }
 }

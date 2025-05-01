@@ -31,7 +31,30 @@ class _ForecastScreenState extends State<ForecastScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red, size: 40),
+                  SizedBox(height: 10),
+                  Text(
+                    'Failed to fetch weather:\n${snapshot.error}',
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _weatherFuture = WeatherService().fetchWeather(
+                          city: widget.city,
+                        );
+                      });
+                    },
+                    child: Text('Try Again'),
+                  ),
+                ],
+              ),
+            );
           }
 
           final data = snapshot.data!;
@@ -58,7 +81,7 @@ class _ForecastScreenState extends State<ForecastScreen> {
               ...data.daily.map(
                 (day) => ListTile(
                   title: Text(
-                    '${DateFormat.E().format(day.date)}: ${day.tempMin}°C - ${day.tempMax}°C',
+                    '${DateFormat.E().format(day.date)}: ${day.tempMin}°F - ${day.tempMax}°C',
                   ),
                 ),
               ),

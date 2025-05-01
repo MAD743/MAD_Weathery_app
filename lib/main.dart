@@ -22,7 +22,7 @@ class WeatherlyApp extends StatelessWidget {
       routes: {
         '/alerts': (context) => AlertSettingsScreen(),
         '/radar': (context) => RadarMapScreen(),
-        '/reports': (context) => CommunityReportScreen(), // Will create next
+        '/reports': (context) => CommunityReportScreen(),
       },
     );
   }
