@@ -12,19 +12,34 @@ class ForecastScreen extends StatefulWidget {
   _ForecastScreenState createState() => _ForecastScreenState();
 }
 
-class _ForecastScreenState extends State<ForecastScreen> {
+class _ForecastScreenState extends State<ForecastScreen>
+    with SingleTickerProviderStateMixin {
   late Future<WeatherModel> _weatherFuture;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _weatherFuture = WeatherService().fetchWeather(city: widget.city);
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Forecast')),
+      appBar: AppBar(
+        title: Text('Forecast'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: [Tab(text: 'Hourly Forecast'), Tab(text: '7-Day Forecast')],
+        ),
+      ),
       body: FutureBuilder<WeatherModel>(
         future: _weatherFuture,
         builder: (context, snapshot) {
@@ -32,58 +47,38 @@ class _ForecastScreenState extends State<ForecastScreen> {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, color: Colors.red, size: 40),
-                  SizedBox(height: 10),
-                  Text(
-                    'Failed to fetch weather:\n${snapshot.error}',
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _weatherFuture = WeatherService().fetchWeather(
-                          city: widget.city,
-                        );
-                      });
-                    },
-                    child: Text('Try Again'),
-                  ),
-                ],
+              child: Text(
+                'Failed to fetch weather: ${snapshot.error}',
+                textAlign: TextAlign.center,
               ),
             );
           }
 
           final data = snapshot.data!;
-          return ListView(
-            padding: EdgeInsets.all(16),
+          return TabBarView(
+            controller: _tabController,
             children: [
-              Text(
-                'Current Temp: ${data.currentTemp}°C',
-                style: TextStyle(fontSize: 22),
+              ListView.builder(
+                itemCount: data.hourly.length,
+                itemBuilder: (context, index) {
+                  final hour = data.hourly[index];
+                  return ListTile(
+                    leading: Text(DateFormat.Hm().format(hour.time)),
+                    title: Text('${hour.temp}°F'),
+                    subtitle: Text(hour.description),
+                  );
+                },
               ),
-              SizedBox(height: 16),
-              Text('Hourly Forecast:', style: TextStyle(fontSize: 18)),
-              SizedBox(height: 8),
-              ...data.hourly.map(
-                (hour) => ListTile(
-                  title: Text(
-                    '${DateFormat.Hm().format(hour.time)}: ${hour.temp}°C',
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-              Text('7-Day Forecast:', style: TextStyle(fontSize: 18)),
-              SizedBox(height: 8),
-              ...data.daily.map(
-                (day) => ListTile(
-                  title: Text(
-                    '${DateFormat.E().format(day.date)}: ${day.tempMin}°F - ${day.tempMax}°C',
-                  ),
-                ),
+              ListView.builder(
+                itemCount: data.daily.length,
+                itemBuilder: (context, index) {
+                  final day = data.daily[index];
+                  return ListTile(
+                    leading: Text(DateFormat.EEEE().format(day.date)),
+                    title: Text('${day.tempMin}°F ~ ${day.tempMax}°F'),
+                    subtitle: Text(day.description),
+                  );
+                },
               ),
             ],
           );

@@ -35,17 +35,17 @@ class WeatherService {
 
     final response = await http.get(Uri.parse(url));
     if (response.statusCode != 200) throw Exception('Failed to fetch weather');
-
     final data = json.decode(response.body);
     final List forecasts = data['list'];
 
     return WeatherModel(
       currentTemp: forecasts[0]['main']['temp'].toDouble(),
       hourly:
-          forecasts.take(12).map((e) {
+          forecasts.take(8).map((e) {
             return HourlyForecast(
               time: DateTime.parse(e['dt_txt']),
               temp: e['main']['temp'].toDouble(),
+              description: e['weather'][0]['main'],
             );
           }).toList(),
       daily: _extractDailyForecasts(forecasts),
@@ -53,28 +53,32 @@ class WeatherService {
   }
 
   List<DailyForecast> _extractDailyForecasts(List<dynamic> forecastList) {
-    Map<String, List<double>> groupedTemps = {};
+    final Map<String, List<Map<String, dynamic>>> grouped = {};
 
     for (var entry in forecastList) {
       String date = entry['dt_txt'].substring(0, 10);
-      double temp = entry['main']['temp'].toDouble();
-      if (!groupedTemps.containsKey(date)) {
-        groupedTemps[date] = [];
+      if (!grouped.containsKey(date)) {
+        grouped[date] = [];
       }
-      groupedTemps[date]!.add(temp);
+      grouped[date]!.add(entry);
     }
 
     List<DailyForecast> daily = [];
-    groupedTemps.forEach((date, temps) {
+    for (var date in grouped.keys.toList()..sort()) {
+      if (daily.length >= 7) break;
+      final temps =
+          grouped[date]!.map((e) => e['main']['temp'].toDouble()).toList();
+      final description = grouped[date]![0]['weather'][0]['main'];
       daily.add(
         DailyForecast(
           date: DateTime.parse(date),
           tempMin: temps.reduce((a, b) => a < b ? a : b),
           tempMax: temps.reduce((a, b) => a > b ? a : b),
+          description: description,
         ),
       );
-    });
+    }
 
-    return daily.take(7).toList();
+    return daily;
   }
 }

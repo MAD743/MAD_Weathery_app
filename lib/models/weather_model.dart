@@ -13,18 +13,25 @@ class WeatherModel {
 class HourlyForecast {
   final DateTime time;
   final double temp;
+  final String description;
 
-  HourlyForecast({required this.time, required this.temp});
+  HourlyForecast({
+    required this.time,
+    required this.temp,
+    required this.description,
+  });
 }
 
 class DailyForecast {
   final DateTime date;
   final double tempMin;
   final double tempMax;
+  final String description;
 
   DailyForecast({
     required this.date,
     required this.tempMin,
     required this.tempMax,
+    required this.description,
   });
 }
